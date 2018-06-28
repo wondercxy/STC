@@ -31,10 +31,10 @@ public class GeoHash {
 		setMinLatLng();
 	}
 
-	// public GeoHash(double lat, double lng) {
-	// location = new LocationBean(lat, lng);
-	// setMinLatLng();
-	// }
+	public GeoHash(double lat, double lng) {
+		location = new LocationBean(lat, lng);
+		setMinLatLng();
+	}
 
 	public int gethashLength() {
 		return hashLength;
@@ -145,7 +145,7 @@ public class GeoHash {
 	 * @Author:lulei
 	 * @Description: 获取经纬度的base32字符串
 	 */
-	private String getGeoHashBase32(double lat, double lng) {
+	public String getGeoHashBase32(double lat, double lng) {
 		boolean[] bools = getGeoBinary(lat, lng);
 		if (bools == null) {
 			return null;
@@ -301,9 +301,9 @@ public class GeoHash {
 
 	public static void main(String[] args) {
 
-		// GeoHash g = new GeoHash(40.222012, 116.248283);
-		GeoHash g = new GeoHash();
-		// System.out.println(g.getGeoHashBase32());
-		g.insert();
+		// GeoHash g = new GeoHash();
+		// // GeoHash g = new GeoHash(40.222012, 116.248283);
+		// System.out.println(g.getGeoHashBase32(40.222012, 116.248283));
+		// g.insert();
 	}
 }

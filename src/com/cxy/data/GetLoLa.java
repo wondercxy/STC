@@ -10,13 +10,13 @@ import java.sql.ResultSet;
 public class GetLoLa {
 	public static void getLL() {
 		Connection con = null;
-		String sql = "select longitude,latitude from checkinnew";
+		String sql = "select longitude,latitude from checkintwi";
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		BufferedWriter bw = null;
 		try {
 			bw = new BufferedWriter(
-					new OutputStreamWriter(new FileOutputStream("F:\\AnacondaWork\\cluster\\allpoints.txt")));
+					new OutputStreamWriter(new FileOutputStream("F:\\AnacondaWork\\cluster\\allpointsTwi.txt")));
 			con = GetConnection.getCon();
 			ps = con.prepareStatement(sql);
 			rs = ps.executeQuery();

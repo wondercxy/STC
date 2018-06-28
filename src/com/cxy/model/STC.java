@@ -9,6 +9,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -20,8 +23,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
+import com.cxy.data.GetConnection;
 import com.cxy.data.TimeAndContent;
 import com.cxy.data.TimeAndLoca;
 
@@ -40,6 +43,9 @@ public class STC {
 
 	public String outputPath;
 	public String inputPath = "F:\\WorkSpace\\JIM\\JIM\\input\\deal\\checkin2.txt";// 签到数据
+
+	public ArrayList<String> trainData;// 训练数据
+	public ArrayList<String> predictData;// 预测数据
 
 	public ArrayList<Integer> userList = new ArrayList<>();
 	public HashMap<Integer, Integer> userToIndex = new HashMap<>();
@@ -117,6 +123,9 @@ public class STC {
 		this.gamma = 0.5;
 		this.gammaSum = 1.0;
 
+		trainData = new ArrayList<>();
+		predictData = new ArrayList<>();
+
 		location_region = new HashMap<>();
 		hourcontent = new HashMap<>();
 
@@ -152,12 +161,51 @@ public class STC {
 		user_topic_time_density = new HashMap<Short, HashMap<Byte, HashMap<Byte, Double>>>();
 	}
 
+	// 从数据库读取训练数据
+	public void readTrain() throws Exception {
+		Connection con = GetConnection.getCon();
+		String sql = "select user_id,latitude,longitude,location_id,time,content from checkinnewtrain";
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		ps = con.prepareStatement(sql);
+		rs = ps.executeQuery();
+		while (rs.next()) {
+			String tmp = rs.getInt(1) + "--" + rs.getDouble(2) + "--" + rs.getDouble(3) + "--" + rs.getInt(4) + "--"
+					+ rs.getString(5) + "--" + rs.getString(6);
+			trainData.add(tmp);
+		}
+		rs.close();
+		ps.close();
+		con.close();
+		System.out.println("TrainData is done!");
+	}
+
+	// 从数据库读取测试数据
+	public void readPredict() throws Exception {
+		Connection con = GetConnection.getCon();
+		String sql = "select user_id,latitude,longitude,location_id,time,content from checkinnewpredict";
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		ps = con.prepareStatement(sql);
+		rs = ps.executeQuery();
+		while (rs.next()) {
+			String tmp = rs.getInt(1) + "--" + rs.getDouble(2) + "--" + rs.getDouble(3) + "--" + rs.getInt(4) + "--"
+					+ rs.getString(5) + "--" + rs.getString(6);
+			predictData.add(tmp);
+		}
+		rs.close();
+		ps.close();
+		con.close();
+		System.out.println("PredictData is done!");
+	}
+
 	// 类别索引
 	public void TopicDictionaryMaker() throws IOException {
-		BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(inputPath)));
-		String line = reader.readLine();
+		// BufferedReader reader = new BufferedReader(new InputStreamReader(new
+		// FileInputStream(inputPath)));
+		// String line = reader.readLine();
 		int value = 0;
-		while (line != null) {
+		for (String line : trainData) {
 			String[] ar = line.split("--");
 			String[] con = ar[5].split(",");
 
@@ -167,9 +215,7 @@ public class STC {
 					value++;
 				}
 			}
-			line = reader.readLine();
 		}
-		reader.close();
 
 		// System.out.println(topic_dictionary.size());
 		System.out.println("TopicDictionaryMaker() is done!");
@@ -197,9 +243,11 @@ public class STC {
 	public void RegionLocationMaker() throws Exception {
 		int id = 0;
 		List<Integer> regionList = getRegion();// 区域id
-		BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(inputPath)));
-		String line = reader.readLine();
-		while (line != null) {
+		// BufferedReader reader = new BufferedReader(new InputStreamReader(new
+		// FileInputStream(inputPath)));
+		// String line = reader.readLine();
+		// while (line != null) {
+		for (String line : trainData) {
 			String[] ar = line.split("--");
 			int u_id = Integer.valueOf(ar[0]);
 			// int region = Integer.valueOf(ar[6]);
@@ -282,9 +330,9 @@ public class STC {
 			// map.put(location_id, 1);
 			// region_point.put(region, map);
 			// }
-			line = reader.readLine();
+			// line = reader.readLine();
 		}
-		reader.close();
+		// reader.close();
 
 		hourcontent = TimeAndContent.timecontent();
 
@@ -1007,10 +1055,12 @@ public class STC {
 	}
 
 	public void Result() throws Exception {
-		BufferedReader reader = new BufferedReader(
-				new InputStreamReader(new FileInputStream("F:\\WorkSpace\\JIM\\JIM\\input\\deal\\JIMTEST5.txt")));
-		BufferedWriter wr0 = new BufferedWriter(new OutputStreamWriter(
-				new FileOutputStream("F:\\WorkSpace\\JIM\\JIM\\input\\deal\\RESULTJIM.txt"), "utf-8"));
+		// BufferedReader reader = new BufferedReader(
+		// new InputStreamReader(new
+		// FileInputStream("F:\\WorkSpace\\JIM\\JIM\\input\\deal\\JIMTEST5.txt")));
+		// BufferedWriter wr0 = new BufferedWriter(new OutputStreamWriter(
+		// new FileOutputStream("F:\\WorkSpace\\JIM\\JIM\\input\\deal\\RESULTJIM.txt"),
+		// "utf-8"));
 		// BufferedWriter wr1 = new BufferedWriter(
 		// new OutputStreamWriter(new
 		// FileOutputStream("F:\\WorkSpace\\JIM\\JIM\\input\\theta.txt"), "utf-8"));
@@ -1018,19 +1068,26 @@ public class STC {
 		// BufferedWriter wr2 = new BufferedWriter(
 		// new OutputStreamWriter(new
 		// FileOutputStream("F:\\WorkSpace\\JIM\\JIM\\input\\phi.txt"), "utf-8"));
-		String line = reader.readLine();
-		int re_count = 0;
-		int sum1 = 0;
-		int sum5 = 0;
-		int sum10 = 0;
-		int sum20 = 0;
+		// String line = reader.readLine();
+		int re_countHome = 0;
+		int sum1Home = 0;
+		int sum5Home = 0;
+		int sum10Home = 0;
+		int sum20Home = 0;
+
+		int re_countOut = 0;
+		int sum1Out = 0;
+		int sum5Out = 0;
+		int sum10Out = 0;
+		int sum20Out = 0;
 
 		HashMap<Integer, Set<Integer>> timemap = TimeAndLoca.timeandloca();
+		//
+		// TreeMap<Integer, Integer> userSum = new TreeMap<>();// 统计每个用户的记录数
+		// TreeMap<Integer, Integer> userHit = new TreeMap<>();
 
-		TreeMap<Integer, Integer> userSum = new TreeMap<>();// 统计每个用户的记录数
-		TreeMap<Integer, Integer> userHit = new TreeMap<>();
-
-		while (line != null) {
+		// while (line != null) {
+		for (String line : predictData) {
 			String[] info = line.split("--");
 			int u_id = Integer.valueOf(info[0]);
 			int loca_id = Integer.valueOf(info[3]);
@@ -1038,26 +1095,26 @@ public class STC {
 			double lng = Double.valueOf(info[2]);
 			int hour = Integer.parseInt(info[4].split(" ")[1].split(":")[0]);
 
-			if (!userHit.containsKey(u_id))
-				userHit.put(u_id, 0);
+			// if (!userHit.containsKey(u_id))
+			// userHit.put(u_id, 0);
 
 			Point p = new Point(lat, lng, loca_id);
 			HashSet<Integer> homeloca = getHomeLocationInDistance(u_id);
 
 			if (homeloca.contains(loca_id)) {
 				// 统计每个用户的次数
-				if (userSum.containsKey(u_id)) {
-					userSum.put(u_id, userSum.get(u_id) + 1);
-				} else {
-					userSum.put(u_id, 1);
-				}
+				// if (userSum.containsKey(u_id)) {
+				// userSum.put(u_id, userSum.get(u_id) + 1);
+				// } else {
+				// userSum.put(u_id, 1);
+				// }
 
-				re_count++;// 统计home的数量
-				if (re_count % 100 == 0)
-					System.out.println("line =" + re_count + "in result");
+				re_countHome++;// 统计home的数量
+				if (re_countHome % 100 == 0)
+					System.out.println("line =" + re_countHome + "in result");
 
 				// 记录排名
-				HashMap<Integer, Double> rank = new HashMap<Integer, Double>();
+				HashMap<Integer, Double> rankHome = new HashMap<Integer, Double>();
 
 				HashSet<Integer> locaindis = getLocationInDistance(p);
 				int userindex = userToIndex.get(u_id);
@@ -1095,13 +1152,13 @@ public class STC {
 										// double value = utc;
 										double value = utc * lp * tvc * plv * plp;
 
-										if (rank.containsKey(lid)) {
-											double v = rank.get(lid);
+										if (rankHome.containsKey(lid)) {
+											double v = rankHome.get(lid);
 											if (value > v) {
-												rank.put(lid, value);
+												rankHome.put(lid, value);
 											}
 										} else {
-											rank.put(lid, value);
+											rankHome.put(lid, value);
 										}
 									}
 								}
@@ -1110,44 +1167,139 @@ public class STC {
 					}
 				}
 
-				rank = (HashMap<Integer, Double>) sortByValue(rank);
-				Iterator<Integer> iter = rank.keySet().iterator();
+				rankHome = (HashMap<Integer, Double>) sortByValue(rankHome);
+				Iterator<Integer> iter = rankHome.keySet().iterator();
 				ArrayList<Integer> list = new ArrayList<>();
 				int count = 0;
-				wr0.write(u_id + " ");
+				// wr0.write(u_id + " ");
 				while (iter.hasNext()) {
 					int key = iter.next();
 					list.add(key);
-					Double value = rank.get(key);
-					wr0.write("(" + key + "," + value + ") ");
+					// Double value = rankHome.get(key);
+					// wr0.write("(" + key + "," + value + ") ");
 					count++;
 					if (count >= 20)
 						break;
 				}
-				wr0.write("\n");
+				// wr0.write("\n");
 
 				for (int i = 0; i < list.size(); i++) {
 					if (list.get(i) == loca_id) {
 						if (i < 1) {
-							sum1++;
-							sum5++;
-							sum10++;
-							sum20++;
-							userHit.put(u_id, userHit.get(u_id) + 1);
+							sum1Home++;
+							sum5Home++;
+							sum10Home++;
+							sum20Home++;
+							// userHit.put(u_id, userHit.get(u_id) + 1);
 						} else if (i >= 1 && i < 5) {
-							sum5++;
-							sum10++;
-							sum20++;
+							sum5Home++;
+							sum10Home++;
+							sum20Home++;
 						} else if (i > 4 && i <= 9) {
-							sum10++;
-							sum20++;
+							sum10Home++;
+							sum20Home++;
 						} else {
-							sum20++;
+							sum20Home++;
+						}
+					}
+				}
+			} else {
+				re_countOut++;// 统计home的数量
+				if (re_countOut % 100 == 0)
+					System.out.println("Outline =" + re_countOut + "in result");
+
+				// 记录排名
+				HashMap<Integer, Double> rankOut = new HashMap<Integer, Double>();
+
+				HashSet<Integer> locaindis = getLocationInDistance(p);
+				int userindex = userToIndex.get(u_id);
+
+				for (int reg = 0; reg < RegionNumber; reg++) {
+					for (int j = 0; j < areaItemCount[reg].length; j++) {
+						int lid = indexToLocaMap.get(j);
+						if (timemap.get(hour).contains(lid)) {
+							if (locaindis.contains(lid)) {
+								Point lv = location_map.get(lid);
+								double lp = userAreaDistribution[userindex][reg] * areaItemDistribution[reg][j];
+								double plp = GaussianProbability(p, reg);
+								double plv = GaussianProbability(lv, reg);
+								if (location_content.containsKey(lid)) {
+									String[] contents = location_content.get(lid).split(",");
+									// String contents = location_content.get(lid);
+									for (int t = 0; t < TopicNumber; t++) {
+										double tvc = 1d;
+										double utc = 1d;
+										for (String s : contents) {
+											// System.out.println(contents);
+											int index = topic_dictionary.get(s);
+											int uid = userToIndex.get(u_id);
+											utc = userTopicDistribution[uid][t] * topicItemDistribution[t][index];
+											tvc = hourTopicDistribution[hour][t] * topicHourItemDistribution[t][index];
+										}
+										// utc = utc / contents.length;
+										// tvc = tvc / contents.length;
+										utc = Math.pow(utc, 1 / contents.length);
+										tvc = Math.pow(tvc, 1 / contents.length);
+
+										// double value = utc * lp * tvc;
+										// double value = utc * lp;
+										// double value = lp * tvc * plv * plp;
+										// double value = utc;
+										double value = utc * lp * tvc * plv * plp;
+
+										if (rankOut.containsKey(lid)) {
+											double v = rankOut.get(lid);
+											if (value > v) {
+												rankOut.put(lid, value);
+											}
+										} else {
+											rankOut.put(lid, value);
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+
+				rankOut = (HashMap<Integer, Double>) sortByValue(rankOut);
+				Iterator<Integer> iter = rankOut.keySet().iterator();
+				ArrayList<Integer> list = new ArrayList<>();
+				int count = 0;
+				// wr0.write(u_id + " ");
+				while (iter.hasNext()) {
+					int key = iter.next();
+					list.add(key);
+					// Double value = rankOut.get(key);
+					// wr0.write("(" + key + "," + value + ") ");
+					count++;
+					if (count >= 20)
+						break;
+				}
+				// wr0.write("\n");
+
+				for (int i = 0; i < list.size(); i++) {
+					if (list.get(i) == loca_id) {
+						if (i < 1) {
+							sum1Out++;
+							sum5Out++;
+							sum10Out++;
+							sum20Out++;
+							// userHit.put(u_id, userHit.get(u_id) + 1);
+						} else if (i >= 1 && i < 5) {
+							sum5Out++;
+							sum10Out++;
+							sum20Out++;
+						} else if (i > 4 && i <= 9) {
+							sum10Out++;
+							sum20Out++;
+						} else {
+							sum20Out++;
 						}
 					}
 				}
 			}
-			line = reader.readLine();
+			// line = reader.readLine();
 		}
 		// int indexfor24 = userToIndex.get(24);
 		//
@@ -1170,13 +1322,13 @@ public class STC {
 		// }
 		// wr2.write("\n");
 		// }
-		wr0.flush();
-		wr0.close();
+		// wr0.flush();
+		// wr0.close();
 		// wr1.flush();
 		// wr1.close();
 		// wr2.flush();
 		// wr2.close();
-		reader.close();
+		// reader.close();
 
 		// for (Entry<Integer, Integer> entry : userSum.entrySet()) {
 		// int id = entry.getKey();
@@ -1184,21 +1336,35 @@ public class STC {
 		// + Double.valueOf(userHit.get(id)) / Double.valueOf(entry.getValue()));
 		// }
 		BufferedWriter wr = new BufferedWriter(new OutputStreamWriter(
-				new FileOutputStream("F:\\WorkSpace\\JIM\\JIM\\input\\deal\\RESULTJIM.txt"), "utf-8"));
+				new FileOutputStream("F:\\WorkSpace\\JIM\\JIM\\input\\deal\\RESULTJIMHome.txt"), "utf-8"));
+		BufferedWriter wro = new BufferedWriter(new OutputStreamWriter(
+				new FileOutputStream("F:\\WorkSpace\\JIM\\JIM\\input\\deal\\RESULTJIMOut.txt"), "utf-8"));
 
-		wr.write(1 + " " + sum1 + " " + Double.valueOf(sum1) / Double.valueOf(re_count) + "\n");
-		wr.write(5 + " " + sum5 + " " + Double.valueOf(sum5) / Double.valueOf(re_count) + "\n");
-		wr.write(10 + " " + sum10 + " " + Double.valueOf(sum10) / Double.valueOf(re_count) + "\n");
-		wr.write(20 + " " + sum20 + " " + Double.valueOf(sum20) / Double.valueOf(re_count) + "\n");
-		wr.write(re_count);
+		wr.write(1 + " " + sum1Home + " " + Double.valueOf(sum1Home) / Double.valueOf(re_countHome) + "\n");
+		wr.write(5 + " " + sum5Home + " " + Double.valueOf(sum5Home) / Double.valueOf(re_countHome) + "\n");
+		wr.write(10 + " " + sum10Home + " " + Double.valueOf(sum10Home) / Double.valueOf(re_countHome) + "\n");
+		wr.write(20 + " " + sum20Home + " " + Double.valueOf(sum20Home) / Double.valueOf(re_countHome) + "\n");
+		wr.write(re_countHome + "\n");
 		wr.flush();
 		wr.close();
 
-		System.out.println(1 + " " + sum1 + " " + Double.valueOf(sum1) / Double.valueOf(re_count));
-		System.out.println(5 + " " + sum5 + " " + Double.valueOf(sum5) / Double.valueOf(re_count));
-		System.out.println(10 + " " + sum10 + " " + Double.valueOf(sum10) / Double.valueOf(re_count));
-		System.out.println(20 + " " + sum20 + " " + Double.valueOf(sum20) / Double.valueOf(re_count));
-		System.out.println(re_count);
+		wro.write(1 + " " + sum1Out + " " + Double.valueOf(sum1Out) / Double.valueOf(re_countOut) + "\n");
+		wro.write(5 + " " + sum5Out + " " + Double.valueOf(sum5Out) / Double.valueOf(re_countOut) + "\n");
+		wro.write(10 + " " + sum10Out + " " + Double.valueOf(sum10Out) / Double.valueOf(re_countOut) + "\n");
+		wro.write(20 + " " + sum20Out + " " + Double.valueOf(sum20Out) / Double.valueOf(re_countOut) + "\n");
+		wro.write(re_countOut + "\n");
+		wro.flush();
+		wro.close();
+
+		// System.out.println(1 + " " + sum1 + " " + Double.valueOf(sum1) /
+		// Double.valueOf(re_count));
+		// System.out.println(5 + " " + sum5 + " " + Double.valueOf(sum5) /
+		// Double.valueOf(re_count));
+		// System.out.println(10 + " " + sum10 + " " + Double.valueOf(sum10) /
+		// Double.valueOf(re_count));
+		// System.out.println(20 + " " + sum20 + " " + Double.valueOf(sum20) /
+		// Double.valueOf(re_count));
+		// System.out.println(re_count);
 
 	}
 
@@ -1207,6 +1373,8 @@ public class STC {
 		// Point a=new Point(40.7505163, 73.9934993, 11);
 		// Point b=new Point(34.098, 118.328395, 14);
 		// System.out.println(stc.getDistance(a, b));
+		stc.readTrain();
+		stc.readPredict();
 		stc.TopicDictionaryMaker();
 		stc.RegionLocationMaker();
 		stc.ComputeHomeLocation();

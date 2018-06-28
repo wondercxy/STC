@@ -1,9 +1,11 @@
 package com.cxy.second;
+/*
+ * 利用jaccard计算用户之间的相似度
+ * 计算依据是：用户共同访问过的地点
+ */
 
 import java.io.BufferedWriter;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.OutputStreamWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -23,7 +25,7 @@ public class Jaccard {
 		Connection con = GetConnection.getCon();
 		PreparedStatement ps = null;
 		ResultSet rs = null;
-		String sql = "select user_id,location_id from checkinnew";
+		String sql = "select user_id,location_id from checkintwi";
 		ps = con.prepareStatement(sql);
 		rs = ps.executeQuery();
 		while (rs.next()) {
@@ -85,18 +87,18 @@ public class Jaccard {
 	}
 
 	public void write(int number) throws Exception {
-		BufferedWriter bw = new BufferedWriter(
-				new OutputStreamWriter(new FileOutputStream("F:\\WorkSpace\\JIM\\JIM\\input\\deal\\jaccard.txt")));
+		BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
+				new FileOutputStream("F:\\WorkSpace\\JIM\\JIM\\input\\deal\\jaccardTwitter.txt")));
 
 		for (Entry<Integer, TreeMap<Double, Integer>> entry : result.entrySet()) {
 			int count = 0;
 			String text = entry.getKey() + " ";
 			for (Entry<Double, Integer> e : entry.getValue().descendingMap().entrySet()) {
-				text += e.getValue();
+				text += e.getValue() + " ";
 				if (count++ > number)
 					break;
 			}
-			bw.write(text);
+			bw.write(text + "\n");
 		}
 		bw.flush();
 		bw.close();

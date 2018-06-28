@@ -23,6 +23,7 @@ public class DeleteTwiLessTen {
 		for (int l : set) {
 			ps.setInt(1, l);
 			ps.execute();
+			System.out.println(l);
 		}
 	}
 
@@ -48,7 +49,7 @@ public class DeleteTwiLessTen {
 	}
 
 	public static void main(String[] args) throws Exception {
-//		delete();
+		// delete();
 		deleteUser();
 	}
 }
